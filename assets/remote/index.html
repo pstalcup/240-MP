@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0A0094">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>240-MP Remote</title>
+<style>
+  /* Served by src/remote/RemoteServer. Colors follow the app's "Video 1" theme. */
+  @font-face {
+    font-family: "VCR";
+    src: url("/font.ttf") format("truetype");
+  }
+  :root {
+    --primary: #FFFFFF;
+    --secondary: #C2BFE4;
+    --tertiary: #8480C9;
+    --surface: #0A0094;
+    --accent: #AECFFF;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--surface);
+    color: var(--primary);
+    font-family: "VCR", ui-monospace, Menlo, monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    overscroll-behavior: none;
+  }
+  main { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 20px; }
+  header { display: flex; justify-content: space-between; align-items: baseline; }
+  h1 { font-size: 22px; margin: 0; letter-spacing: 2px; font-weight: normal; }
+  #conn { font-size: 13px; color: var(--secondary); }
+  #conn.off { color: #FF8A8A; }
+
+  button {
+    font: inherit;
+    color: var(--primary);
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid var(--tertiary);
+    border-radius: 10px;
+    min-height: 56px;
+    font-size: 18px;
+    letter-spacing: 1px;
+    cursor: pointer;
+  }
+  button:active, button.held { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+
+  .dpad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 10px;
+    aspect-ratio: 1;
+    width: 100%;
+  }
+  .dpad button { font-size: 28px; min-height: 0; }
+  .dpad .ok { border-radius: 50%; font-size: 22px; }
+  .row { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 10px; }
+
+  #now {
+    border: 2px solid var(--tertiary);
+    border-radius: 10px;
+    padding: 12px;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+  }
+  #now.on { display: flex; }
+  .label { font-size: 13px; color: var(--secondary); display: flex; justify-content: space-between; }
+  .bar { height: 8px; background: rgba(255, 255, 255, 0.15); border-radius: 4px; overflow: hidden; }
+  .bar > div { height: 100%; width: 0; background: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>240-MP</h1>
+    <span id="conn">CONNECTING</span>
+  </header>
+
+  <div class="dpad">
+    <span></span>
+    <button data-action="up" data-repeat aria-label="Up">&#9650;</button>
+    <span></span>
+    <button data-action="left" data-repeat aria-label="Left">&#9664;</button>
+    <button data-action="select" class="ok">OK</button>
+    <button data-action="right" data-repeat aria-label="Right">&#9654;</button>
+    <span></span>
+    <button data-action="down" data-repeat aria-label="Down">&#9660;</button>
+    <span></span>
+  </div>
+
+  <div class="row">
+    <button data-action="back">BACK</button>
+    <button data-action="play_pause">PLAY/PAUSE</button>
+  </div>
+
+  <section id="now">
+    <div class="label"><span>NOW PLAYING</span><span id="time">0:00 / 0:00</span></div>
+    <div class="bar"><div id="progress"></div></div>
+    <div class="row">
+      <button data-media="PREV" aria-label="Previous chapter">|&#9664;&#9664;</button>
+      <button data-media="REWIND" aria-label="Rewind">&#9664;&#9664;</button>
+      <button data-media="FORWARD" aria-label="Fast forward">&#9654;&#9654;</button>
+      <button data-media="NEXT" aria-label="Next chapter">&#9654;&#9654;|</button>
+    </div>
+    <div class="row">
+      <button data-media="VOLUME_DOWN" data-repeat aria-label="Volume down">VOL&minus;</button>
+      <button data-media="MUTE">MUTE</button>
+      <button data-media="VOLUME_UP" data-repeat aria-label="Volume up">VOL+</button>
+    </div>
+    <button data-media="STOP">STOP</button>
+  </section>
+</main>
+
+<script>
+  // Hold timings match InputManager's gamepad auto-repeat (400 ms delay, 100 ms interval).
+  const REPEAT_DELAY_MS = 400;
+  const REPEAT_INTERVAL_MS = 100;
+  const STATUS_POLL_MS = 1000;
+
+  const conn = document.getElementById("conn");
+
+  function setConnected(ok) {
+    conn.textContent = ok ? "CONNECTED" : "OFFLINE";
+    conn.classList.toggle("off", !ok);
+  }
+
+  function send(path) {
+    // The custom header is what the server checks to reject cross-site requests.
+    return fetch(path, { method: "POST", headers: { "X-240MP-Remote": "1" } })
+      .then(() => setConnected(true))
+      .catch(() => setConnected(false));
+  }
+
+  function pathFor(btn) {
+    return btn.dataset.action ? "/api/action/" + btn.dataset.action
+                              : "/api/media/" + btn.dataset.media;
+  }
+
+  document.querySelectorAll("button").forEach(btn => {
+    let delay = null, interval = null;
+    const stop = () => {
+      clearTimeout(delay); clearInterval(interval);
+      delay = interval = null;
+      btn.classList.remove("held");
+    };
+    btn.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      btn.classList.add("held");
+      if (navigator.vibrate) navigator.vibrate(10);
+      send(pathFor(btn));
+      if (btn.hasAttribute("data-repeat")) {
+        delay = setTimeout(() => {
+          interval = setInterval(() => send(pathFor(btn)), REPEAT_INTERVAL_MS);
+        }, REPEAT_DELAY_MS);
+      }
+    });
+    ["pointerup", "pointercancel", "pointerleave"].forEach(t => btn.addEventListener(t, stop));
+    btn.addEventListener("contextmenu", e => e.preventDefault());
+  });
+
+  function fmt(ms) {
+    const s = Math.max(0, Math.floor(ms / 1000));
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+    const mm = h ? String(m).padStart(2, "0") : String(m);
+    return (h ? h + ":" : "") + mm + ":" + String(sec).padStart(2, "0");
+  }
+
+  function poll() {
+    fetch("/api/status", { cache: "no-store" })
+      .then(r => r.json())
+      .then(s => {
+        setConnected(true);
+        document.getElementById("now").classList.toggle("on", s.playing);
+        document.getElementById("time").textContent = fmt(s.position) + " / " + fmt(s.duration);
+        document.getElementById("progress").style.width =
+          s.duration > 0 ? Math.min(100, 100 * s.position / s.duration) + "%" : "0";
+      })
+      .catch(() => setConnected(false))
+      .finally(() => setTimeout(poll, STATUS_POLL_MS));
+  }
+  poll();
+</script>
+</body>
+</html>

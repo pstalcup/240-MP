@@ -31,6 +31,8 @@ The guiding idea: **browse structured content, then hand off to the right tool f
       ...
     player/
       MpvController.h/.cpp          # mpv subprocess controller: QProcess launch + IPC socket
+    remote/
+      RemoteServer.h/.cpp           # optional phone-remote web server (page in assets/remote/)
   modules/                          # QML + assets per module (discovered at startup)
     plex/
       manifest.json                 # module identity and settings shape
@@ -341,6 +343,21 @@ All input arrives in QML as **ordinary key events** — views bind `Keys.onPress
 ### Input survives a display hand-off
 
 On RPi/EGLFS, input keeps flowing while Qt is VT-switched away: Qt's libinput/evdev handlers and SDL both read `/dev/input/event*` directly, with no VT gating. **Only rendering is suspended.** That's why a Player view can forward keys to fullscreen mpv over IPC on the Pi.
+
+## Phone Remote (RemoteServer)
+
+`RemoteServer` (`src/remote/RemoteServer.h/.cpp`, context property **`remoteServer`**) is an optional, tiny HTTP server that lets a phone on the same network act as a remote. It is **off by default**: Settings > Phone Remote flips the app setting `remote_server` (`"On"`/`"Off"`) and the server starts or stops live; the port is `remote_server_port` in `config.json` (default `2400`).
+
+It adds no new input path. Every button lands on one the app already has:
+
+| Route | Goes to |
+|---|---|
+| `GET /` | `assets/remote/index.html`, the remote page (plus `GET /font.ttf`, the app's VCR font) |
+| `POST /api/action/<name>` | `InputManager::tapAction`, the same synthesized key a gamepad press produces (`up`/`down`/`left`/`right`/`select`/`back`/`play_pause`) |
+| `POST /api/media/<KEY>` | `MpvController::sendKey` with a key bound by `scripts/mpv-media-keys.lua` (`PLAYPAUSE`, `STOP`, `FORWARD`, `REWIND`, `NEXT`, `PREV`, `VOLUME_UP`, `VOLUME_DOWN`, `MUTE`); a no-op when nothing is playing |
+| `GET /api/status` | `{"playing", "position", "duration"}` from `MpvController` |
+
+There is no login. The server only answers loopback/private-network peers, and POSTs must carry an `X-240MP-Remote` header so another web page open on the phone can't drive the app cross-origin.
 
 ## C++ Backend Patterns
 

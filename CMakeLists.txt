@@ -71,6 +71,7 @@ add_executable(240mp
     src/input/InputManager.cpp
     src/input/IdleTracker.cpp
     src/update/UpdateManager.cpp
+    src/remote/RemoteServer.cpp
     $<$<BOOL:${APPLE}>:src/util/MacosUtils.mm>
 )
 

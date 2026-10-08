@@ -25,6 +25,8 @@ public:
     int position()    const { return m_position;    }
     int duration()    const { return m_duration;    }
     int playlistPos() const { return m_playlistPos; }
+    // True while an mpv process is alive (playback hand-off in progress).
+    bool isRunning()  const { return m_process && m_process->state() != QProcess::NotRunning; }
 
     Q_INVOKABLE void loadAndPlay(const QString &url, float startSeconds,
                                   int audioTrack, int subTrack,
