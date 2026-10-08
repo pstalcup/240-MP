@@ -59,7 +59,7 @@ public:
 
     // One-shot press + release of a named action ("up", "select", "back",
     // "play_pause", … — the same names input.cfg uses), delivered exactly like
-    // a gamepad press. Used by the phone remote (RemoteServer); returns false
+    // a gamepad press. Used by the browser remote (RemoteServer); returns false
     // for an unknown name.
     Q_INVOKABLE bool tapAction(const QString &name);
 

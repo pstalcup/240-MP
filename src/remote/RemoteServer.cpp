@@ -98,7 +98,7 @@ void RemoteServer::applySettings() {
     const bool wasRunning = running();
     if (wasRunning && (!wanted || m_port != quint16(port))) {
         m_server->close();
-        qInfo("[remote] Phone remote stopped");
+        qInfo("[remote] Browser remote stopped");
     }
     if (wanted && !running()) {
         if (!m_server) {
@@ -107,7 +107,7 @@ void RemoteServer::applySettings() {
         }
         m_port = quint16(port);
         if (m_server->listen(QHostAddress::Any, m_port))
-            qInfo("[remote] Phone remote listening at %s", qPrintable(url()));
+            qInfo("[remote] Browser remote listening at %s", qPrintable(url()));
         else
             qWarning("[remote] Could not listen on port %d: %s", port,
                      qPrintable(m_server->errorString()));

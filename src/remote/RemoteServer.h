@@ -11,7 +11,7 @@ class AppCore;
 class InputManager;
 class MpvController;
 
-// Phone remote: a tiny HTTP server on the local network that serves a
+// Browser remote: a tiny HTTP server on the local network that serves a
 // touch-friendly remote page (assets/remote/index.html) and a small JSON API
 // behind it. Every button maps onto input the app already understands:
 //
@@ -26,7 +26,7 @@ class MpvController;
 // Off by default (app setting "remote_server": "On"/"Off", port from
 // "remote_server_port", default 2400), toggled live. Only answers peers on a
 // private/loopback network, and POSTs must carry an X-240MP-Remote header so a
-// random web page in the phone's browser can't drive the app cross-origin
+// random web page in the same browser can't drive the app cross-origin
 // (a custom header forces a CORS preflight, which this server never approves).
 class RemoteServer : public QObject {
     Q_OBJECT

@@ -164,7 +164,7 @@ int main(int argc, char *argv[]) {
     InputManager        inputManager(dataRoot, &appCore);
     IdleTracker         idleTracker(60);   // disabled until Main.qml applies the saved setting
     UpdateManager       updateManager(appRoot, dataRoot);
-    // Phone remote: drives the app through the same action/key paths as a gamepad.
+    // Browser remote: drives the app through the same action/key paths as a gamepad.
     RemoteServer        remoteServer(appRoot, &appCore, &inputManager, &mpvController);
 
     // Playback follows the UI's display: mpv gets a --fs-screen* arg derived

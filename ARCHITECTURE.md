@@ -32,7 +32,7 @@ The guiding idea: **browse structured content, then hand off to the right tool f
     player/
       MpvController.h/.cpp          # mpv subprocess controller: QProcess launch + IPC socket
     remote/
-      RemoteServer.h/.cpp           # optional phone-remote web server (page in assets/remote/)
+      RemoteServer.h/.cpp           # optional browser-remote web server (page in assets/remote/)
   modules/                          # QML + assets per module (discovered at startup)
     plex/
       manifest.json                 # module identity and settings shape
@@ -344,9 +344,9 @@ All input arrives in QML as **ordinary key events** — views bind `Keys.onPress
 
 On RPi/EGLFS, input keeps flowing while Qt is VT-switched away: Qt's libinput/evdev handlers and SDL both read `/dev/input/event*` directly, with no VT gating. **Only rendering is suspended.** That's why a Player view can forward keys to fullscreen mpv over IPC on the Pi.
 
-## Phone Remote (RemoteServer)
+## Browser Remote (RemoteServer)
 
-`RemoteServer` (`src/remote/RemoteServer.h/.cpp`, context property **`remoteServer`**) is an optional, tiny HTTP server that lets a phone on the same network act as a remote. It is **off by default**: Settings > Phone Remote flips the app setting `remote_server` (`"On"`/`"Off"`) and the server starts or stops live; the port is `remote_server_port` in `config.json` (default `2400`).
+`RemoteServer` (`src/remote/RemoteServer.h/.cpp`, context property **`remoteServer`**) is an optional, tiny HTTP server that lets any web browser on the same network (phone, tablet, laptop) act as a remote. It is **off by default**: Settings > Browser Remote flips the app setting `remote_server` (`"On"`/`"Off"`) and the server starts or stops live; the port is `remote_server_port` in `config.json` (default `2400`).
 
 It adds no new input path. Every button lands on one the app already has:
 
@@ -357,9 +357,9 @@ It adds no new input path. Every button lands on one the app already has:
 | `POST /api/media/<KEY>` | `MpvController::sendKey` with a key bound by `scripts/mpv-media-keys.lua` (`PLAYPAUSE`, `STOP`, `FORWARD`, `REWIND`, `NEXT`, `PREV`, `VOLUME_UP`, `VOLUME_DOWN`, `MUTE`); a no-op when nothing is playing |
 | `GET /api/status` | `{"playing", "position", "duration"}` from `MpvController` |
 
-The page is responsive: on a phone it is a single touch column, and in a laptop-width browser it switches to two columns with keyboard shortcuts (arrows, Enter, Esc/Backspace, Space, plus J/L, [/], -/+, M, S for playback), each firing the same request as its on-screen button.
+The page is responsive: on a narrow screen it is a single touch column, and at laptop width it switches to two columns with keyboard shortcuts (arrows, Enter, Esc/Backspace, Space, plus J/L, [/], -/+, M, S for playback), each firing the same request as its on-screen button.
 
-There is no login. The server only answers loopback/private-network peers, and POSTs must carry an `X-240MP-Remote` header so another web page open on the phone can't drive the app cross-origin.
+There is no login. The server only answers loopback/private-network peers, and POSTs must carry an `X-240MP-Remote` header so another web page open in the same browser can't drive the app cross-origin.
 
 ## C++ Backend Patterns
 

@@ -16,7 +16,7 @@ FocusScope {
     // Flat model: mix of section headers and rows
     property var settingsItems: []
 
-    // Live phone-remote address for the "Phone Remote" help text; it changes as
+    // Live browser-remote address for the "Browser Remote" help text; it changes as
     // the row is toggled, so it can't be baked into the row's description.
     // Null-guarded: context properties resolve to null while the view tears down.
     property string remoteUrl: remoteServer ? remoteServer.url : ""
@@ -146,15 +146,15 @@ FocusScope {
             moduleId: ""
         })
 
-        // Phone Remote — serves a remote-control page on the local network
+        // Browser Remote — serves a remote-control page on the local network
         // (src/remote/RemoteServer). Off by default; takes effect immediately.
         items.push({
             type: "list_single",
             key: "remote_server",
-            label: "Phone Remote",
+            label: "Browser Remote",
             options: ["Off", "On"],
             value: appSettings["remote_server"] || "Off",
-            description: "Control 240-MP from a phone browser on your network",
+            description: "Control 240-MP from a web browser on your network",
             moduleId: ""
         })
 
@@ -449,7 +449,7 @@ FocusScope {
             text: {
                 var row = rowHelpBackground.currentRow
                 if (row && row.key === "remote_server" && settingsRoot.remoteUrl !== "")
-                    return "On your phone, open " + settingsRoot.remoteUrl
+                    return "In a browser, open " + settingsRoot.remoteUrl
                 return (row && row.description) || ""
             }
             color: root.primaryColor
