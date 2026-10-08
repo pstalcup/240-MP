@@ -27,6 +27,7 @@
 #include "input/InputManager.h"
 #include "input/IdleTracker.h"
 #include "update/UpdateManager.h"
+#include "remote/RemoteServer.h"
 #include "util/ExecPath.h"
 #include "util/DisplayHandoff.h"
 #ifdef Q_OS_MAC
@@ -163,6 +164,8 @@ int main(int argc, char *argv[]) {
     InputManager        inputManager(dataRoot, &appCore);
     IdleTracker         idleTracker(60);   // disabled until Main.qml applies the saved setting
     UpdateManager       updateManager(appRoot, dataRoot);
+    // Browser remote: drives the app through the same action/key paths as a gamepad.
+    RemoteServer        remoteServer(appRoot, &appCore, &inputManager, &mpvController);
 
     // Playback follows the UI's display: mpv gets a --fs-screen* arg derived
     // from this on macOS / desktop Linux (no-op at index 0 and on headless).
@@ -192,6 +195,7 @@ int main(int argc, char *argv[]) {
     ctx->setContextProperty("mpvController", &mpvController);
     ctx->setContextProperty("inputManager",  &inputManager);
     ctx->setContextProperty("updateManager", &updateManager);
+    ctx->setContextProperty("remoteServer",  &remoteServer);
 #ifdef Q_OS_MAC
     // Target display geometry in Qt coordinates (top-left origin), so the QML
     // Window bindings position onto the chosen screen. The native fullscreen

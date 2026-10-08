@@ -395,6 +395,19 @@ void InputManager::onAppSettingChanged(const QString &key, const QString &value)
         loadKeyRemap();
 }
 
+bool InputManager::tapAction(const QString &name) {
+    bool ok = false;
+    const Action a = actionFromString(name.toLower(), &ok);
+    if (!ok || a == Action::None)
+        return false;
+    // Bypasses beginPress/m_heldActions: a tap is never held, so it must not
+    // arm auto-repeat or swallow a real device's press of the same action.
+    deliverPress(a, false);
+    if (windowActive())
+        postKey(qtKeyForAction(a), QEvent::KeyRelease, false);
+    return true;
+}
+
 void InputManager::setRemapCapture(bool active) {
     m_remapCapture = active;
 }

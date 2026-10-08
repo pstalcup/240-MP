@@ -57,6 +57,12 @@ public:
     // pad's Back button can still cancel the overlay.
     Q_INVOKABLE void setRemapCapture(bool active);
 
+    // One-shot press + release of a named action ("up", "select", "back",
+    // "play_pause", … — the same names input.cfg uses), delivered exactly like
+    // a gamepad press. Used by the browser remote (RemoteServer); returns false
+    // for an unknown name.
+    Q_INVOKABLE bool tapAction(const QString &name);
+
 signals:
     void gamepadConnectedChanged();
     void lastInputDeviceChanged();
