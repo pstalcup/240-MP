@@ -357,6 +357,8 @@ It adds no new input path. Every button lands on one the app already has:
 | `POST /api/media/<KEY>` | `MpvController::sendKey` with a key bound by `scripts/mpv-media-keys.lua` (`PLAYPAUSE`, `STOP`, `FORWARD`, `REWIND`, `NEXT`, `PREV`, `VOLUME_UP`, `VOLUME_DOWN`, `MUTE`); a no-op when nothing is playing |
 | `GET /api/status` | `{"playing", "position", "duration"}` from `MpvController` |
 
+The page is responsive: on a phone it is a single touch column, and in a laptop-width browser it switches to two columns with keyboard shortcuts (arrows, Enter, Esc/Backspace, Space, plus J/L, [/], -/+, M, S for playback), each firing the same request as its on-screen button.
+
 There is no login. The server only answers loopback/private-network peers, and POSTs must carry an `X-240MP-Remote` header so another web page open on the phone can't drive the app cross-origin.
 
 ## C++ Backend Patterns
